@@ -6,7 +6,6 @@ from datetime import datetime
 
 def scrape_moca_dashboard():
     url = "https://www.civilaviation.gov.in/"
-    # Headers make the request look like a real browser
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -15,39 +14,38 @@ def scrape_moca_dashboard():
         response = requests.get(url, headers=headers, timeout=30)
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # The data in your image is stored in 'views-row' or card containers
-        # We will extract all labels and their corresponding numbers
-        stats = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")}
+        # This dictionary will store our data row
+        row_data = {"Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")}
         
-        # Target the specific blocks for Domestic and International Traffic
-        cards = soup.find_all('div', class_='views-field')
+        # Target the dashboard items based on the classes seen in the site source
+        items = soup.find_all('div', class_='views-field')
         
-        for card in cards:
-            label_tag = card.find('span', class_='views-label')
-            value_tag = card.find('span', class_='field-content')
+        for item in items:
+            label = item.find('span', class_='views-label')
+            value = item.find('span', class_='field-content')
             
-            if label_tag and value_tag:
-                label = label_tag.text.strip().replace(":", "")
-                value = value_tag.text.strip()
-                if value: # Only add if there is a number
-                    stats[label] = value
+            if label and value:
+                clean_label = label.text.strip().replace(":", "")
+                clean_value = value.text.strip().replace(",", "")
+                if clean_value: # Only add if there's actual data
+                    row_data[clean_label] = clean_value
 
-        if len(stats) > 1:
+        if len(row_data) > 1:
             file_path = 'moca_data.csv'
             file_exists = os.path.isfile(file_path)
             
+            # Using DictWriter ensures data aligns even if the site adds new categories
             with open(file_path, 'a', newline='', encoding='utf-8') as f:
-                # Use DictWriter to handle varying columns if the site updates
-                writer = csv.DictWriter(f, fieldnames=stats.keys())
+                writer = csv.DictWriter(f, fieldnames=row_data.keys())
                 if not file_exists:
                     writer.writeheader()
-                writer.writerow(stats)
-            print("Data captured successfully.")
+                writer.writerow(row_data)
+            print("Successfully updated moca_data.csv")
         else:
-            print("Could not find dashboard data. The site structure may have changed.")
+            print("Search failed: No data found in the dashboard containers.")
 
     except Exception as e:
-        print(f"Error occurred: {e}")
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
     scrape_moca_dashboard()

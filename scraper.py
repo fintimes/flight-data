@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 def scrape_moca():
-    url = "https://www.civilaviation.gov.in/in-focus"
+    url = "https://www.civilaviation.gov.in"
     headers = {"User-Agent": "Mozilla/5.0"}
     
     try:

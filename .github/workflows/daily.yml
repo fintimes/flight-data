@@ -1,0 +1,31 @@
+name: MoCA_Daily_Update
+on:
+  schedule:
+    - cron: '30 6 * * *'  # This is 06:30 UTC, which is 12:00 PM IST
+  workflow_dispatch:   # Allows you to click a button to run it manually
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Tools
+        run: pip install -r requirements.txt
+
+      - name: Run Scraper
+        run: python scraper.py
+
+      - name: Save to Repository
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add moca_data.csv
+          git commit -m "Updated daily table data" || exit 0
+          git push
